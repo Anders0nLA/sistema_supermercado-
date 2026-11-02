@@ -15,4 +15,7 @@ app.use('/vendas', vendaRoutes);
 const produtoRoutes = require('./routes/produtoRoutes');
 app.use('/produtos', produtoRoutes);
 
+const path = require('path');
+app.use(express.static(path.join(__dirname, '../../frontend')));
+
 app.listen(3000, () => console.log('Rodando em http://localhost:3000'));

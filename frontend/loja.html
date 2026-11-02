@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Supermercado - Loja</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header>
+    <h1>🛒 Supermercado</h1>
+    <a href="admin.html">Área administrativa</a>
+  </header>
+
+  <main>
+    <section class="produtos">
+      <h2>Produtos</h2>
+      <div class="grid" id="grid"></div>
+    </section>
+
+    <aside class="carrinho">
+      <h2>Seu carrinho</h2>
+      <div id="itens"></div>
+
+      <div class="linha"><span>Subtotal</span><span id="subtotal">R$ 0,00</span></div>
+      <div class="linha desconto"><span>Desconto (5%)</span><span id="desconto">- R$ 0,00</span></div>
+      <div class="linha total"><span>Total</span><span id="total">R$ 0,00</span></div>
+
+      <p class="estoque aviso">Compras acima de R$ 200,00 ganham 5% de desconto.</p>
+      <button class="btn-finalizar" id="btnFinalizar" disabled>Finalizar compra</button>
+      <div id="msg"></div>
+    </aside>
+  </main>
+
+  <script src="js/loja.js"></script>
+</body>
+</html>
