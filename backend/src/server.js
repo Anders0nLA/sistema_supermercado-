@@ -8,4 +8,11 @@ app.use(express.json());
 
 app.get('/', (req, res) => res.json({ status: 'Funcinando' }));
 
+const vendaRoutes = require('./routes/vendaRoutes');
+app.use('/vendas', vendaRoutes);
+
+
+const produtoRoutes = require('./routes/produtoRoutes');
+app.use('/produtos', produtoRoutes);
+
 app.listen(3000, () => console.log('Rodando em http://localhost:3000'));
