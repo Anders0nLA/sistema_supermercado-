@@ -147,3 +147,6 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# Banco SQLite antigo (o projeto agora usa PostgreSQL)
+*.db

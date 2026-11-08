@@ -1,29 +1,33 @@
 const db = require('../database/db');
 
-function listar() {
-  return db.prepare('SELECT * FROM produto ORDER BY nome').all();
+async function listar() {
+  const { rows } = await db.query('SELECT * FROM produto ORDER BY nome');
+  return rows;
 }
 
-function buscarPorId(id) {
-  return db.prepare('SELECT * FROM produto WHERE id = ?').get(id);
+async function buscarPorId(id) {
+  const { rows } = await db.query('SELECT * FROM produto WHERE id = $1', [id]);
+  return rows[0];
 }
 
-function criar({ nome, preco, quantidade_estoque }) {
-  const info = db
-    .prepare('INSERT INTO produto (nome, preco, quantidade_estoque) VALUES (?, ?, ?)')
-    .run(nome, preco, quantidade_estoque);
-  return buscarPorId(info.lastInsertRowid);
+async function criar({ nome, preco, quantidade_estoque }) {
+  const { rows } = await db.query(
+    'INSERT INTO produto (nome, preco, quantidade_estoque) VALUES ($1, $2, $3) RETURNING *',
+    [nome.trim(), preco, quantidade_estoque]
+  );
+  return rows[0];
 }
 
-function atualizar(id, { nome, preco, quantidade_estoque }) {
-  db.prepare(
-    'UPDATE produto SET nome = ?, preco = ?, quantidade_estoque = ? WHERE id = ?'
-  ).run(nome, preco, quantidade_estoque, id);
-  return buscarPorId(id);
+async function atualizar(id, { nome, preco, quantidade_estoque }) {
+  const { rows } = await db.query(
+    'UPDATE produto SET nome = $1, preco = $2, quantidade_estoque = $3 WHERE id = $4 RETURNING *',
+    [nome.trim(), preco, quantidade_estoque, id]
+  );
+  return rows[0];
 }
 
-function deletar(id) {
-  return db.prepare('DELETE FROM produto WHERE id = ?').run(id);
+async function deletar(id) {
+  await db.query('DELETE FROM produto WHERE id = $1', [id]);
 }
 
 module.exports = { listar, buscarPorId, criar, atualizar, deletar };
