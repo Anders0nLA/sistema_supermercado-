@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Entrar | Supermercado</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="pagina-acesso">
+  <header class="topo">
+    <a class="marca" href="/">Supermercado</a>
+  </header>
+
+  <main class="acesso">
+    <section class="acesso-caixa" aria-labelledby="tituloAcesso">
+      <h1 id="tituloAcesso">Entrar</h1>
+      <p class="dica" id="dicaAcesso">Use seu e-mail e senha para fazer compras.</p>
+
+      <form id="formAcesso" novalidate>
+        <div class="campo" id="campoNome" hidden>
+          <label for="nome">Nome</label>
+          <input type="text" id="nome" autocomplete="name">
+        </div>
+
+        <div class="campo">
+          <label for="email">E-mail</label>
+          <input type="email" id="email" autocomplete="email" required>
+        </div>
+
+        <div class="campo">
+          <label for="senha">Senha</label>
+          <input type="password" id="senha" autocomplete="current-password" required>
+          <p class="campo-ajuda" id="ajudaSenha" hidden>Pelo menos 6 caracteres.</p>
+        </div>
+
+        <button type="submit" class="btn-primario" id="btnEnviar">Entrar</button>
+      </form>
+
+      <p id="msg" class="msg" role="alert" hidden></p>
+
+      <p class="acesso-troca" id="trocaModo">
+        Ainda não tem conta? <a href="/cadastro">Criar conta</a>
+      </p>
+    </section>
+
+    <aside class="contas-teste" id="contasTeste" aria-labelledby="tituloTeste">
+      <h2 id="tituloTeste">Contas de teste</h2>
+      <p>Clique para preencher o formulário.</p>
+      <button type="button" data-email="admin@supermercado.com" data-senha="admin123">
+        <strong>Administrador</strong>
+        <span>admin@supermercado.com</span>
+        <span>senha: admin123</span>
+        <span class="contas-pode">Gerencia produtos e também compra na loja</span>
+      </button>
+      <button type="button" data-email="cliente@supermercado.com" data-senha="cliente123">
+        <strong>Cliente</strong>
+        <span>cliente@supermercado.com</span>
+        <span>senha: cliente123</span>
+        <span class="contas-pode">Só compra na loja</span>
+      </button>
+    </aside>
+  </main>
+
+  <script src="/js/login.js"></script>
+</body>
+</html>

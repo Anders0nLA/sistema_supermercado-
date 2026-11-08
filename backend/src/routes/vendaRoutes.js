@@ -1,12 +1,15 @@
 const express = require('express');
 const db = require('../database/db');
 const { realizarVenda, VendaError } = require('../services/vendaService');
+const { exigirLogin, exigirPapel } = require('../middlewares/auth');
 
 const router = express.Router();
+router.use(exigirLogin);
 
-router.post('/', (req, res) => {
+// Qualquer usuário logado pode comprar; a venda fica registrada no nome dele
+router.post('/', async (req, res) => {
   try {
-    const venda = realizarVenda(req.body.itens);
+    const venda = await realizarVenda(req.body && req.body.itens, req.usuario.id);
     res.status(201).json(venda);
   } catch (e) {
     if (e instanceof VendaError) {
@@ -17,29 +20,48 @@ router.post('/', (req, res) => {
   }
 });
 
-router.get('/:id', (req, res) => {
-  const venda = db.prepare('SELECT * FROM venda WHERE id = ?').get(req.params.id);
-  if (!venda) return res.status(404).json({ erro: 'Pedido não encontrado.' });
+// Administrador vê qualquer pedido; cliente vê só os próprios
+router.get('/:id', async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(404).json({ erro: 'Pedido não encontrado.' });
+  }
 
-  const itens = db.prepare(`
-    SELECT iv.produto_id, p.nome, iv.quantidade, iv.preco_unitario,
-           iv.quantidade * iv.preco_unitario AS subtotal
-    FROM item_venda iv
-    JOIN produto p ON p.id = iv.produto_id
-    WHERE iv.venda_id = ?
-  `).all(req.params.id);
+  const { rows } = await db.query(
+    `SELECT v.*, u.nome AS cliente
+     FROM venda v LEFT JOIN usuario u ON u.id = v.usuario_id
+     WHERE v.id = $1`,
+    [id]
+  );
+  const venda = rows[0];
+  const ehDono = venda && venda.usuario_id === req.usuario.id;
+  if (!venda || (req.usuario.papel !== 'admin' && !ehDono)) {
+    return res.status(404).json({ erro: 'Pedido não encontrado.' });
+  }
 
-  res.json({ ...venda, itens });
+  const itens = await db.query(
+    `SELECT iv.produto_id, p.nome, iv.quantidade, iv.preco_unitario,
+            iv.quantidade * iv.preco_unitario AS subtotal
+     FROM item_venda iv
+     JOIN produto p ON p.id = iv.produto_id
+     WHERE iv.venda_id = $1
+     ORDER BY iv.id`,
+    [id]
+  );
+
+  res.json({ ...venda, itens: itens.rows });
 });
 
-router.get('/', (req, res) => {
-  const vendas = db.prepare(`
-    SELECT v.*,
-      (SELECT COALESCE(SUM(quantidade), 0) FROM item_venda WHERE venda_id = v.id) AS total_itens
+// Lista de todos os pedidos: só administrador
+router.get('/', exigirPapel('admin'), async (req, res) => {
+  const { rows } = await db.query(`
+    SELECT v.*, u.nome AS cliente,
+      (SELECT COALESCE(SUM(quantidade), 0)::int FROM item_venda WHERE venda_id = v.id) AS total_itens
     FROM venda v
+    LEFT JOIN usuario u ON u.id = v.usuario_id
     ORDER BY v.id DESC
-  `).all();
-  res.json(vendas);
+  `);
+  res.json(rows);
 });
 
 module.exports = router;

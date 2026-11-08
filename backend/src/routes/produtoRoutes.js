@@ -1,9 +1,14 @@
 const express = require('express');
 const repo = require('../repositories/produtoRepository');
+const { exigirLogin, exigirPapel } = require('../middlewares/auth');
 
 const router = express.Router();
 
-function validar({ nome, preco, quantidade_estoque }) {
+// Qualquer usuário logado pode ver os produtos; só o administrador altera
+router.use(exigirLogin);
+const somenteAdmin = exigirPapel('admin');
+
+function validar({ nome, preco, quantidade_estoque } = {}) {
   if (!nome || typeof nome !== 'string' || !nome.trim()) {
     return 'O nome é obrigatório.';
   }
@@ -16,46 +21,58 @@ function validar({ nome, preco, quantidade_estoque }) {
   return null;
 }
 
+// Converte o :id da URL; retorna null se não for um inteiro positivo
+function lerId(req) {
+  const id = Number(req.params.id);
+  return Number.isInteger(id) && id > 0 ? id : null;
+}
+
 // Listar todos
-router.get('/', (req, res) => {
-  res.json(repo.listar());
+router.get('/', async (req, res) => {
+  res.json(await repo.listar());
 });
 
 // Buscar um
-router.get('/:id', (req, res) => {
-  const produto = repo.buscarPorId(req.params.id);
+router.get('/:id', async (req, res) => {
+  const id = lerId(req);
+  const produto = id && (await repo.buscarPorId(id));
   if (!produto) return res.status(404).json({ erro: 'Produto não encontrado.' });
   res.json(produto);
 });
 
 // Criar
-router.post('/', (req, res) => {
+router.post('/', somenteAdmin, async (req, res) => {
   const erro = validar(req.body);
   if (erro) return res.status(400).json({ erro });
-  res.status(201).json(repo.criar(req.body));
+  res.status(201).json(await repo.criar(req.body));
 });
 
 // Atualizar
-router.put('/:id', (req, res) => {
-  if (!repo.buscarPorId(req.params.id)) {
+router.put('/:id', somenteAdmin, async (req, res) => {
+  const id = lerId(req);
+  if (!id || !(await repo.buscarPorId(id))) {
     return res.status(404).json({ erro: 'Produto não encontrado.' });
   }
   const erro = validar(req.body);
   if (erro) return res.status(400).json({ erro });
-  res.json(repo.atualizar(req.params.id, req.body));
+  res.json(await repo.atualizar(id, req.body));
 });
 
 // Deletar
-router.delete('/:id', (req, res) => {
-  if (!repo.buscarPorId(req.params.id)) {
+router.delete('/:id', somenteAdmin, async (req, res) => {
+  const id = lerId(req);
+  if (!id || !(await repo.buscarPorId(id))) {
     return res.status(404).json({ erro: 'Produto não encontrado.' });
   }
   try {
-    repo.deletar(req.params.id);
+    await repo.deletar(id);
     res.status(204).send();
   } catch (e) {
-    // produto já vendido não pode ser apagado (chave estrangeira em item_venda)
-    res.status(409).json({ erro: 'Não é possível excluir um produto que já foi vendido.' });
+    // 23503 = violação de chave estrangeira: o produto já aparece em alguma venda
+    if (e.code === '23503') {
+      return res.status(409).json({ erro: 'Não é possível excluir um produto que já foi vendido.' });
+    }
+    throw e;
   }
 });
 
