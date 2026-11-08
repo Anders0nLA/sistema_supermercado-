@@ -24,72 +24,93 @@ class VendaError extends Error {
   }
 }
 
-const buscarProduto = db.prepare('SELECT * FROM produto WHERE id = ?');
-const inserirVenda = db.prepare(
-  'INSERT INTO venda (valor_bruto, desconto, valor_final) VALUES (?, ?, ?)'
-);
-const inserirItem = db.prepare(
-  'INSERT INTO item_venda (venda_id, produto_id, quantidade, preco_unitario) VALUES (?, ?, ?, ?)'
-);
-const baixarEstoque = db.prepare(
-  'UPDATE produto SET quantidade_estoque = quantidade_estoque - ? WHERE id = ?'
-);
-
-// Tudo dentro de uma transação: se algo lançar erro, o banco desfaz tudo (rollback)
-const realizarVenda = db.transaction((itens) => {
+// Junta itens repetidos do mesmo produto e valida o formato
+function agruparItens(itens) {
   if (!Array.isArray(itens) || itens.length === 0) {
     throw new VendaError('O carrinho está vazio.');
   }
-
-  // Junta itens repetidos do mesmo produto
   const agrupados = new Map();
   for (const item of itens) {
-    const produto_id = Number(item.produto_id);
-    const quantidade = Number(item.quantidade);
-    if (!Number.isInteger(produto_id) || !Number.isInteger(quantidade) || quantidade <= 0) {
+    const produto_id = Number(item && item.produto_id);
+    const quantidade = Number(item && item.quantidade);
+    if (!Number.isInteger(produto_id) || produto_id <= 0 || !Number.isInteger(quantidade) || quantidade <= 0) {
       throw new VendaError('Item inválido: informe produto_id e quantidade inteira maior que zero.');
     }
     agrupados.set(produto_id, (agrupados.get(produto_id) || 0) + quantidade);
   }
+  return agrupados;
+}
 
-  // Valida estoque e calcula o subtotal usando o preço do BANCO (nunca o do front)
-  let subtotal = 0;
-  const linhas = [];
-  for (const [produto_id, quantidade] of agrupados) {
-    const produto = buscarProduto.get(produto_id);
-    if (!produto) {
-      throw new VendaError(`Produto ${produto_id} não encontrado.`, 404);
+// Tudo dentro de uma transação: se algo der errado, o banco desfaz tudo (ROLLBACK)
+async function realizarVenda(itens, usuarioId = null) {
+  const agrupados = agruparItens(itens);
+  const client = await db.pool.connect();
+
+  try {
+    await client.query('BEGIN');
+
+    // Valida estoque e calcula o subtotal usando o preço do BANCO (nunca o do front).
+    // FOR UPDATE trava a linha do produto até o fim da transação, evitando que duas
+    // compras simultâneas vendam o mesmo estoque.
+    let subtotal = 0;
+    const linhas = [];
+    for (const [produto_id, quantidade] of agrupados) {
+      const { rows } = await client.query(
+        'SELECT * FROM produto WHERE id = $1 FOR UPDATE',
+        [produto_id]
+      );
+      const produto = rows[0];
+      if (!produto) {
+        throw new VendaError(`Produto ${produto_id} não encontrado.`, 404);
+      }
+      if (produto.quantidade_estoque < quantidade) {
+        throw new VendaError(
+          `Estoque insuficiente para "${produto.nome}". Disponível: ${produto.quantidade_estoque}.`,
+          409
+        );
+      }
+      subtotal += produto.preco * quantidade;
+      linhas.push({ produto, quantidade });
     }
-    if (produto.quantidade_estoque < quantidade) {
-      throw new VendaError(
-        `Estoque insuficiente para "${produto.nome}". Disponível: ${produto.quantidade_estoque}.`,
-        409
+
+    const totais = calcularTotais(subtotal);
+
+    const venda = await client.query(
+      'INSERT INTO venda (valor_bruto, desconto, valor_final, usuario_id) VALUES ($1, $2, $3, $4) RETURNING id, data',
+      [totais.valor_bruto, totais.desconto, totais.valor_final, usuarioId]
+    );
+    const { id: venda_id, data } = venda.rows[0];
+
+    for (const { produto, quantidade } of linhas) {
+      await client.query(
+        'INSERT INTO item_venda (venda_id, produto_id, quantidade, preco_unitario) VALUES ($1, $2, $3, $4)',
+        [venda_id, produto.id, quantidade, produto.preco]
+      );
+      await client.query(
+        'UPDATE produto SET quantidade_estoque = quantidade_estoque - $1 WHERE id = $2',
+        [quantidade, produto.id]
       );
     }
-    subtotal += produto.preco * quantidade;
-    linhas.push({ produto, quantidade });
+
+    await client.query('COMMIT');
+
+    return {
+      id: venda_id,
+      data,
+      ...totais,
+      itens: linhas.map(({ produto, quantidade }) => ({
+        produto_id: produto.id,
+        nome: produto.nome,
+        quantidade,
+        preco_unitario: produto.preco,
+      })),
+    };
+  } catch (e) {
+    await client.query('ROLLBACK');
+    throw e;
+  } finally {
+    client.release();
   }
-
-  const totais = calcularTotais(subtotal);
-
-  const venda = inserirVenda.run(totais.valor_bruto, totais.desconto, totais.valor_final);
-  const venda_id = Number(venda.lastInsertRowid);
-
-  for (const { produto, quantidade } of linhas) {
-    inserirItem.run(venda_id, produto.id, quantidade, produto.preco);
-    baixarEstoque.run(quantidade, produto.id);
-  }
-
-  return {
-    id: venda_id,
-    ...totais,
-    itens: linhas.map(({ produto, quantidade }) => ({
-      produto_id: produto.id,
-      nome: produto.nome,
-      quantidade,
-      preco_unitario: produto.preco,
-    })),
-  };
-});
+}
 
 module.exports = { realizarVenda, calcularTotais, VendaError };

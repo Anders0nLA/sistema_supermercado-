@@ -1,0 +1,9 @@
+**/node_modules
+**/*.db
+.git
+.gitignore
+docker/
+*.md
+**/*.log
+.env
+.env.*

@@ -1,0 +1,45 @@
+# Sobe a API e o PostgreSQL.
+# Na pasta docker/:   docker compose up --build
+# Loja:    http://localhost:3000
+# Swagger: http://localhost:3000/docs
+
+name: supermercado
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: supermercado-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: supermercado
+      POSTGRES_PASSWORD: supermercado
+      POSTGRES_DB: supermercado
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U supermercado -d supermercado"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: supermercado-api
+    restart: unless-stopped
+    environment:
+      PORT: 3000
+      DATABASE_URL: postgres://supermercado:supermercado@db:5432/supermercado
+      # Segredo que assina os tokens de login. Troque em produção.
+      JWT_SECRET: troque-este-segredo-em-producao
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:

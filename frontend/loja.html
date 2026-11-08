@@ -3,35 +3,60 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Supermercado - Loja</title>
-  <link rel="stylesheet" href="css/style.css">
+  <title>Supermercado</title>
+  <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-  <header>
-    <h1>🛒 Supermercado</h1>
-    <a href="admin.html">Área administrativa</a>
+  <header class="topo">
+    <a class="marca" href="/">Supermercado</a>
+    <nav aria-label="Principal">
+      <a href="/" aria-current="page">Loja</a>
+      <a href="/admin" data-so-admin hidden>Administração</a>
+    </nav>
+    <div class="conta">
+      <span class="conta-nome"><span id="usuarioNome"></span><span class="conta-papel" id="usuarioPapel"></span></span>
+      <a href="/sair">Sair</a>
+    </div>
   </header>
 
-  <main>
-    <section class="produtos">
-      <h2>Produtos</h2>
-      <div class="grid" id="grid"></div>
+  <main class="loja">
+    <section aria-labelledby="titulo-produtos">
+      <div class="corredor-topo">
+        <h1 id="titulo-produtos">Produtos</h1>
+        <input type="search" id="busca" class="busca" placeholder="Buscar produto" aria-label="Buscar produto">
+      </div>
+      <p class="contagem" id="contagem" aria-live="polite"></p>
+      <ul class="gondola" id="gondola"></ul>
     </section>
 
-    <aside class="carrinho">
-      <h2>Seu carrinho</h2>
-      <div id="itens"></div>
+    <aside class="cupom" id="cupom" aria-labelledby="titulo-cupom">
+      <div class="cupom-papel">
+        <h2 id="titulo-cupom">Seu cupom</h2>
+        <ul class="cupom-itens" id="itens"></ul>
 
-      <div class="linha"><span>Subtotal</span><span id="subtotal">R$ 0,00</span></div>
-      <div class="linha desconto"><span>Desconto (5%)</span><span id="desconto">- R$ 0,00</span></div>
-      <div class="linha total"><span>Total</span><span id="total">R$ 0,00</span></div>
+        <div class="meta" id="meta">
+          <p id="metaTexto"></p>
+          <div class="meta-barra" aria-hidden="true"><span id="metaBarra"></span></div>
+        </div>
 
-      <p class="estoque aviso">Compras acima de R$ 200,00 ganham 5% de desconto.</p>
-      <button class="btn-finalizar" id="btnFinalizar" disabled>Finalizar compra</button>
-      <div id="msg"></div>
+        <dl class="cupom-totais">
+          <div><dt>Subtotal</dt><dd id="subtotal">R$ 0,00</dd></div>
+          <div class="desconto" id="linhaDesconto"><dt>Desconto 5%</dt><dd id="desconto">- R$ 0,00</dd></div>
+          <div class="total"><dt>Total</dt><dd id="total">R$ 0,00</dd></div>
+        </dl>
+      </div>
+
+      <button class="btn-primario" id="btnFinalizar" disabled>Finalizar compra</button>
+      <p id="msg" class="msg" role="status" hidden></p>
     </aside>
   </main>
 
-  <script src="js/loja.js"></script>
+  <a class="barra-cupom" id="barraCupom" href="#cupom" hidden>
+    <span id="barraTexto"></span>
+    <span>Ver cupom</span>
+  </a>
+
+  <script src="/js/sessao.js"></script>
+  <script src="/js/loja.js"></script>
 </body>
 </html>

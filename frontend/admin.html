@@ -3,47 +3,66 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Supermercado - Administração</title>
-  <link rel="stylesheet" href="css/style.css">
+  <title>Administração | Supermercado</title>
+  <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-  <header>
-    <h1>⚙️ Administração de Produtos</h1>
-    <a href="loja.html">Voltar para a loja</a>
+  <header class="topo">
+    <a class="marca" href="/">Supermercado</a>
+    <nav aria-label="Principal">
+      <a href="/">Loja</a>
+      <a href="/admin" aria-current="page">Administração</a>
+    </nav>
+    <div class="conta">
+      <span class="conta-nome"><span id="usuarioNome"></span><span class="conta-papel" id="usuarioPapel"></span></span>
+      <a href="/sair">Sair</a>
+    </div>
   </header>
 
-  <main>
-    <section class="painel form-painel">
-      <h2 id="tituloForm">Novo produto</h2>
+  <main class="admin">
+    <section class="ficha" id="ficha" aria-labelledby="tituloForm">
+      <h1 id="tituloForm">Novo produto</h1>
+      <p class="dica" id="dicaForm">Preencha os dados para colocar o produto à venda.</p>
 
-      <form id="formProduto">
-        <label for="nome">Nome</label>
-        <input type="text" id="nome" placeholder="Ex.: Arroz 5kg" required>
+      <form id="formProduto" novalidate>
+        <div class="campo">
+          <label for="nome">Nome</label>
+          <input type="text" id="nome" placeholder="Ex.: Arroz 5kg" required autocomplete="off">
+        </div>
 
-        <label for="preco">Preço (R$)</label>
-        <input type="number" id="preco" step="0.01" min="0" placeholder="0,00" required>
+        <div class="campos-lado">
+          <div class="campo">
+            <label for="preco">Preço (R$)</label>
+            <input type="number" id="preco" step="0.01" min="0" placeholder="0,00" required inputmode="decimal">
+          </div>
+          <div class="campo">
+            <label for="estoque">Estoque</label>
+            <input type="number" id="estoque" step="1" min="0" placeholder="0" required inputmode="numeric">
+          </div>
+        </div>
 
-        <label for="estoque">Quantidade em estoque</label>
-        <input type="number" id="estoque" step="1" min="0" placeholder="0" required>
-
-        <button type="submit" class="btn-salvar" id="btnSalvar">Salvar produto</button>
-        <button type="button" class="btn-cancelar" id="btnCancelar" hidden>Cancelar edição</button>
+        <button type="submit" class="btn-primario" id="btnSalvar">Cadastrar produto</button>
+        <button type="button" class="btn-secundario" id="btnCancelar" hidden>Cancelar edição</button>
       </form>
 
-      <div id="msg"></div>
+      <p id="msg" class="msg" role="status" hidden></p>
     </section>
 
-    <section class="painel lista-painel">
-      <h2>Produtos cadastrados</h2>
-      <div class="tabela-wrapper">
+    <section aria-labelledby="titulo-lista">
+      <div class="lista-topo">
+        <h2 id="titulo-lista">Produtos cadastrados</h2>
+        <p id="resumo"></p>
+      </div>
+
+      <div class="tabela-rolagem">
         <table>
           <thead>
             <tr>
-              <th>ID</th>
-              <th>Nome</th>
-              <th>Preço</th>
-              <th>Estoque</th>
-              <th>Ações</th>
+              <th scope="col">Cód.</th>
+              <th scope="col">Produto</th>
+              <th scope="col" class="num">Preço</th>
+              <th scope="col" class="num">Estoque</th>
+              <th scope="col"><span class="sr-only">Ações</span></th>
             </tr>
           </thead>
           <tbody id="tabelaProdutos"></tbody>
@@ -52,6 +71,7 @@
     </section>
   </main>
 
-  <script src="js/admin.js"></script>
+  <script src="/js/sessao.js"></script>
+  <script src="/js/admin.js"></script>
 </body>
 </html>
