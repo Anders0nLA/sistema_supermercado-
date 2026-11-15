@@ -7,7 +7,7 @@ name: supermercado
 
 services:
   db:
-    image: postgres:16-alpine
+    image: postgres:latest  # hoje aponta para o PostgreSQL 18
     container_name: supermercado-db
     restart: unless-stopped
     environment:
@@ -17,7 +17,8 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      # a partir do 18, a imagem guarda os dados em /var/lib/postgresql/<versão>/docker
+      - pgdata:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U supermercado -d supermercado"]
       interval: 5s

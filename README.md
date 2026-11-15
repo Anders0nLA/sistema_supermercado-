@@ -46,7 +46,7 @@ As permissões são verificadas no servidor, não só escondendo botões: um cli
 ## Tecnologias
 
 - Node.js + Express 5
-- PostgreSQL 16 (driver `pg`)
+- PostgreSQL 18, imagem `postgres:latest` (driver `pg`)
 - HTML, CSS e JavaScript puro no front-end
 - Swagger UI (`swagger-ui-express`)
 - Docker e Docker Compose
@@ -69,6 +69,8 @@ docker compose up --build
 | Swagger | http://localhost:3000/docs |
 
 As tabelas, os dez produtos de exemplo e as contas de teste são criados automaticamente. Para parar: `docker compose down`. Para apagar também os dados do banco: `docker compose down -v`.
+
+Se você já tinha rodado o projeto com o PostgreSQL 16, rode `docker compose down -v` antes de subir de novo: os dados de uma versão antiga não abrem numa versão nova.
 
 ## Como rodar sem Docker
 
