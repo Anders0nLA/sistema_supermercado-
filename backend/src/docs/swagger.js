@@ -119,7 +119,6 @@ const spec = {
         responses: {
           204: { description: 'Produto excluído' },
           404: erro('Produto não encontrado'),
-          409: erro('Produto já vendido não pode ser excluído'),
         },
       },
     },
