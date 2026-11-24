@@ -40,10 +40,10 @@ router.get('/:id', async (req, res) => {
   }
 
   const itens = await db.query(
-    `SELECT iv.produto_id, p.nome, iv.quantidade, iv.preco_unitario,
+    `SELECT iv.produto_id, COALESCE(iv.nome_produto, p.nome) AS nome, iv.quantidade, iv.preco_unitario,
             iv.quantidade * iv.preco_unitario AS subtotal
      FROM item_venda iv
-     JOIN produto p ON p.id = iv.produto_id
+     LEFT JOIN produto p ON p.id = iv.produto_id
      WHERE iv.venda_id = $1
      ORDER BY iv.id`,
     [id]

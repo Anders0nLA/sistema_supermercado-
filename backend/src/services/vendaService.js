@@ -83,8 +83,8 @@ async function realizarVenda(itens, usuarioId = null) {
 
     for (const { produto, quantidade } of linhas) {
       await client.query(
-        'INSERT INTO item_venda (venda_id, produto_id, quantidade, preco_unitario) VALUES ($1, $2, $3, $4)',
-        [venda_id, produto.id, quantidade, produto.preco]
+        'INSERT INTO item_venda (venda_id, produto_id, nome_produto, quantidade, preco_unitario) VALUES ($1, $2, $3, $4, $5)',
+        [venda_id, produto.id, produto.nome, quantidade, produto.preco]
       );
       await client.query(
         'UPDATE produto SET quantidade_estoque = quantidade_estoque - $1 WHERE id = $2',

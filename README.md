@@ -98,7 +98,7 @@ Por padrão a API conecta em `postgres://supermercado:supermercado@localhost:543
 | GET | `/produtos/:id` | logado | Busca um produto |
 | POST | `/produtos` | admin | Cadastra um produto |
 | PUT | `/produtos/:id` | admin | Atualiza um produto |
-| DELETE | `/produtos/:id` | admin | Exclui um produto (bloqueado se já foi vendido) |
+| DELETE | `/produtos/:id` | admin | Exclui um produto (as vendas antigas mantêm o nome dele) |
 | POST | `/vendas` | logado | Realiza uma compra: `{ "itens": [{ "produto_id": 1, "quantidade": 2 }] }` |
 | GET | `/vendas` | admin | Lista os pedidos com o nome do cliente |
 | GET | `/vendas/:id` | logado | Detalha um pedido (cliente só vê os próprios) |

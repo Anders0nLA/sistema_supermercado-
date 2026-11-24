@@ -64,16 +64,9 @@ router.delete('/:id', somenteAdmin, async (req, res) => {
   if (!id || !(await repo.buscarPorId(id))) {
     return res.status(404).json({ erro: 'Produto não encontrado.' });
   }
-  try {
-    await repo.deletar(id);
-    res.status(204).send();
-  } catch (e) {
-    // 23503 = violação de chave estrangeira: o produto já aparece em alguma venda
-    if (e.code === '23503') {
-      return res.status(409).json({ erro: 'Não é possível excluir um produto que já foi vendido.' });
-    }
-    throw e;
-  }
+  // Produto já vendido também pode ser excluído: as vendas antigas guardam o nome dele
+  await repo.deletar(id);
+  res.status(204).send();
 });
 
 module.exports = router;
